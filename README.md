@@ -11,7 +11,7 @@
 
 <br>
 
-## bw file editor for Blade of Darkness
+bw file editor for Blade of Darkness  
 This program can modify the map atmosphere without the source MP file.
 
 <br>

@@ -5,6 +5,7 @@ from tkinter import *
 from tkinter.messagebox import showinfo
 from tkinter import colorchooser
 
+import tkinter.ttk as ttk
 import tkinter.font as tkFont
 import struct
 import os
@@ -58,8 +59,12 @@ class GUI:
         self.font_3 = tkFont.Font(font="TkDefaultFont")
         self.font_3.config(size=-15)
 
+        self.style = ttk.Style()
+        self.style.configure("1.TButton",
+                             font=self.font_3)  #foreground background
+
         self.title = "BW editor"
-        self.version = 'v0.1'
+        self.version = 'dev'  #'v0.1'
         self.size = 350, 270
 
         sw = window.winfo_screenwidth()
@@ -97,37 +102,43 @@ class GUI:
         main_frame.grid_columnconfigure(0, weight=1)
         # main_frame.grid_columnconfigure(1, weight=1)
         # main_frame.grid_rowconfigure(0, weight=1)
-        # main_frame.grid_rowconfigure(1, weight=1)
+        main_frame.grid_rowconfigure(2, weight=1)
 
         #
         h = 30
         self.frame_1 = frame_1 = Frame(main_frame,
                                        width=self.size[0],
                                        height=h)
-        self.frame_2 = frame_2 = LabelFrame(main_frame,
-                                            text="Atmospheres: 0",
-                                            fg="#808080",
-                                            labelanchor=SW,
-                                            width=self.size[0],
-                                            height=self.size[1] - h - 60,
-                                            bd=2,
-                                            relief=GROOVE)
-        self.apply = apply = Button(main_frame,
-                                    width=30,
-                                    text="Apply",
-                                    font=self.font_3,
-                                    takefocus=False,
-                                    state=DISABLED,
-                                    bg="#E6E6E6",
-                                    disabledforeground="#B4B4B4",
-                                    relief=GROOVE,
-                                    command=self.applyCMD)
+        self.frame_2 = frame_2 = LabelFrame(
+            main_frame,
+            text="Atmospheres: 0",
+            fg="#808080",
+            labelanchor=SW,
+            width=self.size[0],
+            height=self.size[1] - h - 60,
+            borderwidth=2,
+            relief=GROOVE,
+        )
+        self.frame_3 = frame_3 = Frame(main_frame, width=280, height=35)
+        self.apply = apply = ttk.Button(
+            frame_3,
+            # width=30,
+            text="Apply",
+            # font=self.font_3,
+            takefocus=False,
+            state=DISABLED,
+            # bg="#E6E6E6",
+            # disabledforeground="#B4B4B4",
+            # relief=GROOVE,
+            style="1.TButton",
+            command=self.applyCMD)
 
         self.canvas = canvas = Canvas(frame_2, highlightthickness=0)
         self.sbar = sbar = Scrollbar(frame_2)
 
         frame_1.grid_propagate(0)
         frame_2.grid_propagate(0)
+        frame_3.pack_propagate(0)
 
         frame_1.grid_columnconfigure(0, weight=1)
         frame_1.grid_columnconfigure(2, weight=1)
@@ -136,7 +147,8 @@ class GUI:
 
         frame_1.grid(row=0, column=0)
         frame_2.grid(row=1, column=0, padx=15)
-        apply.grid(row=2, pady=8)
+        frame_3.grid(row=2)  #pady=8
+        apply.pack(fill=BOTH, expand=1)
 
         canvas.grid(row=0, column=0, columnspan=2, sticky=NSEW)
         sbar.grid(row=0, column=1, sticky=NS)
@@ -147,10 +159,10 @@ class GUI:
         window.update_idletasks()
         self.frame_in_canvas = frame_in_canvas = Frame(
             canvas,
-            bd=0,
+            # borderwidth=0,
             width=self.size[0],
             height=frame_2.winfo_height(),
-            relief=GROOVE)
+            relief=FLAT)
         canvas.create_window((-20, 1), anchor=NW, window=frame_in_canvas)
 
         # frame_in_canvas.grid_propagate(0)
@@ -158,6 +170,7 @@ class GUI:
         frame_in_canvas.grid_columnconfigure(1, weight=1, pad=13)
         frame_in_canvas.grid_columnconfigure(2, weight=1, pad=79)
 
+        # sbar.bind("<MouseWheel>", self.processWheel)
         frame_in_canvas.bind("<MouseWheel>", self.processWheel)
         frame_in_canvas.bind("<ButtonPress-1>", self.focus_set)
         canvas.bind("<ButtonPress-1>", self.focus_set)
@@ -166,14 +179,20 @@ class GUI:
         self.line_1 = line_1 = Frame(frame_1,
                                      width=self.size[0],
                                      height=2,
-                                     bd=2,
+                                     borderwidth=2,
                                      relief=SUNKEN)
         # line_1.pack(fill=X, padx=5, pady=5)
         line_1.grid(row=0, columnspan=3, padx=15)
 
         text = ("name", "color", "density")
         for i in range(3):
-            frame = Frame(frame_1, height=26, width=47, bd=0, relief=GROOVE)
+            frame = Frame(
+                frame_1,
+                height=26,
+                width=47,
+                borderwidth=0,
+                # relief=GROOVE
+            )
             if i == 2:
                 frame['width'] = 49
             label = Label(
@@ -181,7 +200,8 @@ class GUI:
                 text=text[i],
                 fg="#747474",
                 # fg="#%02X%02X%02X" % (116, 116, 116),
-                font=self.font_2)
+                font=self.font_2,
+            )
             frame.pack_propagate(0)
             frame.grid(row=0, column=i)
             label.pack(fill=BOTH, expand=1)
@@ -235,7 +255,8 @@ class GUI:
                     color['val_o'] = color['val_n']
 
                 fog = widget['fog']
-                val_n = float(fog['widget'].get())
+                val_n = fog['widget'].get() or '0'
+                val_n = float(val_n)
                 if fog['val_o'] != val_n:
                     byte = struct.pack('<f', val_n)
                     f.seek(pos + 3)
@@ -267,25 +288,29 @@ class GUI:
                         frame = Frame(self.frame_in_canvas,
                                       width=w[n],
                                       height=h,
-                                      bd=0,
+                                      borderwidth=0,
                                       relief=GROOVE)
                         frame.pack_propagate(0)
                         frame.grid(row=i, column=n, pady=pady)
                         frames.append(frame)
 
-                    e1 = Entry(frames[0], takefocus=False)
+                    e1 = ttk.Entry(frames[0],
+                                   takefocus=False,
+                                   validate='focusout')
+                    e1['validatecommand'] = DefArgWrapper(
+                        self.validate_fn2, e1)
                     e1.pack(fill=BOTH, expand=1)
 
-                    frames[1]['bd'] = 2
+                    frames[1]['borderwidth'] = 2
                     b1 = Button(frames[1], relief=GROOVE, takefocus=False)
                     b1['command'] = DefArgWrapper(self.colorchooser, b1, i)
                     b1.pack(fill=BOTH, expand=1)
 
-                    e2 = Entry(
+                    e2 = ttk.Entry(
                         frames[2],
-                        bd=2,
-                        highlightthickness=0,
-                        #    validate='all',
+                        # borderwidth=2,
+                        # highlightthickness=0,
+                        # validate='all',
                         validatecommand=(self.validateCMD, '%P', '%V', '%W'),
                         takefocus=False)
                     e2.pack(fill=BOTH, expand=1)
@@ -340,6 +365,7 @@ class GUI:
                 i.grid_remove()
 
         self.main_frame.grid()
+        self.canvas.yview_moveto(0)
         self.win.update_idletasks()
         self.canvas['scrollregion'] = (0, 0, 0,
                                        self.frame_in_canvas.winfo_height())
@@ -363,19 +389,27 @@ class GUI:
                 widget['validate'] = 'none'
                 widget.insert(0, "0")
                 widget['validate'] = 'all'
+            elif mode == "key":
                 self.apply['state'] = NORMAL
             return True
 
+        if mode == "focusout":
+            widget.selection_clear()
+
         try:
-            float(content)
+            content = str(float(content))
             if mode == "key":
+                if len(content.split('.')[1]) > 5:
+                    return False
                 self.apply['state'] = NORMAL
         except:
             return False
 
-        if '.' in content and len(content.split('.')[1]) > 5:
-            return False
         return True
+
+    def validate_fn2(self, widget):
+        widget.selection_clear()
+        return False
 
     def colorchooser(self, button, id_):
         c = colorchooser.askcolor(button['bg'])
@@ -393,4 +427,3 @@ gui = GUI(root)
 root.mainloop()
 
 # main()
-
